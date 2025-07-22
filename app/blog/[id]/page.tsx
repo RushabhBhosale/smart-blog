@@ -8,12 +8,14 @@ async function getBlogs() {
 export default async function BlogDetail({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const blogs = await getBlogs();
-  if (!params?.id) return <div className="p-6">Invalid URL 🚫</div>;
+  const { id } = await params;
 
-  const blog = blogs.find((b: any) => b._id === params.id);
+  if (!id) return <div className="p-6">Invalid URL 🚫</div>;
+
+  const blog = blogs.find((b: any) => b._id === id);
 
   if (!blog) return <div className="p-6 text-center">Blog not found ❌</div>;
 
