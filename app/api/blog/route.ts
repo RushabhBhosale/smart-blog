@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { blogCollection } from "@/lib/mongo";
 import { BlogSchema } from "@/lib/blogSchema";
+import JSON5 from "json5";
 
-// GET all blogs
 export async function GET() {
   try {
     const blogs = await blogCollection.find({}).toArray();
@@ -17,7 +17,26 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  let body: any;
+
+  try {
+    let raw = await req.text();
+
+    raw = raw
+      .replace(/\\n/g, "\n")
+      .replace(/\n/g, " ")
+      .replace(/[“”]/g, '"')
+      .replace(/[‘’]/g, "'")
+      .replace(/\s\s+/g, " ");
+
+    body = JSON5.parse(raw);
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Invalid JSON format after cleanup" },
+      { status: 400 }
+    );
+  }
+
   const parsed = BlogSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -26,7 +45,23 @@ export async function POST(req: Request) {
     );
   }
 
-  const blog = { ...parsed.data, createdAt: new Date() };
-  const res = await blogCollection.insertOne(blog);
-  return NextResponse.json({ ...blog, _id: res.insertedId });
+  const blogData = parsed.data;
+
+  let { image, ...rest } = parsed.data;
+
+  if (typeof image === "string" && !image.startsWith("data:image/")) {
+    image = `data:image/jpeg;base64,${image}`;
+  }
+
+  const blog = { ...rest, image, createdAt: new Date() };
+
+  try {
+    const res = await blogCollection.insertOne(blog);
+    return NextResponse.json({ ...blog, _id: res.insertedId });
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Database insert failed" },
+      { status: 500 }
+    );
+  }
 }
