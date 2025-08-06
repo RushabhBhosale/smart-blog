@@ -46,16 +46,18 @@ export async function POST(req: Request) {
 
   const blogData = parsed.data;
 
-  // Format content into readable paragraphs (replace ". " with ".\n\n")
   blogData.content = blogData.content
     .replace(/(?<!\n)\n(?!\n)/g, " ")
     .replace(/\. +/g, ".\n\n")
     .trim();
 
-  // Normalize base64 image
   let image = blogData.image;
   if (typeof image === "string" && !image.startsWith("data:image/")) {
     image = `data:image/jpeg;base64,${image}`;
+  }
+
+  if (!Array.isArray(blogData.tags) || blogData.tags.length === 0) {
+    blogData.tags = ["general"];
   }
 
   const blog = {

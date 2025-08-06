@@ -5,6 +5,7 @@ export const BlogSchema = z.object({
   content: z.string().min(1),
   author: z.string().min(1),
   image: z.string().optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 export type BlogInput = z.infer<typeof BlogSchema>;
