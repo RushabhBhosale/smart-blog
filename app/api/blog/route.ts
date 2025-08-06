@@ -24,7 +24,6 @@ export async function POST(req: Request) {
 
     raw = raw
       .replace(/\\n/g, "\n")
-      .replace(/\n/g, " ")
       .replace(/[“”]/g, '"')
       .replace(/[‘’]/g, "'")
       .replace(/\s\s+/g, " ");
@@ -47,13 +46,23 @@ export async function POST(req: Request) {
 
   const blogData = parsed.data;
 
-  let { image, ...rest } = parsed.data;
+  // Format content into readable paragraphs (replace ". " with ".\n\n")
+  blogData.content = blogData.content
+    .replace(/(?<!\n)\n(?!\n)/g, " ")
+    .replace(/\. +/g, ".\n\n")
+    .trim();
 
+  // Normalize base64 image
+  let image = blogData.image;
   if (typeof image === "string" && !image.startsWith("data:image/")) {
     image = `data:image/jpeg;base64,${image}`;
   }
 
-  const blog = { ...rest, image, createdAt: new Date() };
+  const blog = {
+    ...blogData,
+    image,
+    createdAt: new Date(),
+  };
 
   try {
     const res = await blogCollection.insertOne(blog);

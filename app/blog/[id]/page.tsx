@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 
 async function getBlogs() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/blog`, {
@@ -34,6 +35,7 @@ export default async function BlogDetail({
   }
 
   const blog = blogs.find((b: any) => b._id === id);
+  console.log("egwwe", blog.content);
 
   if (!blog) {
     return (
@@ -99,13 +101,13 @@ export default async function BlogDetail({
         )}
 
         <article className="prose prose-gray dark:prose-invert prose-lg max-w-none">
-          <div className="text-gray-900 dark:text-gray-100 leading-relaxed ">
-            {blog.content.split(/ {2,}/g).map((para: string, i: number) => (
-              <p key={i} className="mb-4">
-                {para}
-              </p>
+          {blog.content
+            .split(/(?<=\.)\s+(?=[A-Z])|(?=- \*\*)/g)
+            .map((para: string, i: number) => (
+              <div key={i} className="mb-4">
+                <ReactMarkdown>{para.trim()}</ReactMarkdown>
+              </div>
             ))}
-          </div>
         </article>
 
         <footer className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
